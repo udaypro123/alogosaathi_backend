@@ -4,10 +4,12 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import logger from './utils/logger.js';
 // Import routes
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/users.route.js';
 import uploadRoutes from './routes/upload.route.js';
+import youtubeRoutes from './routes/youtube.route.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -43,10 +45,10 @@ app.use(compression());
 connectDB()
   .then(() => 
   app.listen(process.env.PORT || 8000, ()=>{
-    console.log( "✅ Connected to MongoDB in Sever.js")
+    logger.info('✅ Connected to MongoDB in Server.js');
   }))
   .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
+    logger.error('❌ MongoDB connection error:', error);
     process.exit(1);
   });
 
@@ -71,6 +73,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/fileUpload', uploadRoutes);
+app.use('/api/youtube', youtubeRoutes);
 
 // // ---- STATIC FILES ----
 // app.use('/uploads', express.static('uploads'));
