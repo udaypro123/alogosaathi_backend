@@ -1,50 +1,81 @@
-import User from '../models/User.models.js'
+import YouTubePost from '../models/youtubepost.models.js';
 
 
-// Get single user by ID
-const addYoutubeItem = async (userId) => {
+// Get single fetchPost by ID
+const addYoutubeItem = async (data) => {
     try {
-        const user = await User.findById(userId).select('-password -refreshTokens');
+        const responsedata = await YouTubePost.create(data);
 
-        if (!user) {
+        if (!responsedata) {
             throw new Error('User not found');
         }
 
-        return user;
+        return responsedata;
     } catch (error) {
         throw error;
     }
 };
 
-// Update user profile
-const updateYoutubeItem = async (userId, updateData) => {
+const getYoutubeItem = async () => {
+    try {
+
+        const responsedata = await YouTubePost.find();
+        if (!responsedata) {
+            throw new Error('User not found');
+        }
+
+        return responsedata;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+const deleteYoutubePost = async (data) => {
+    try {
+
+        console.log("dbc data check ------------->", data)
+        const {id} = data;
+        const responsedata = await YouTubePost.deleteOne({_id:id});
+        console.log("------------->", responsedata)
+
+        if (!responsedata) {
+            throw new Error('User not found');
+        }
+
+        return responsedata;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Update fetchPost profile
+const updateYoutubeItem = async (updateData) => {
     try {
         const {
-            firstName,
-            lastName,
-            phoneNumber,
-            dateOfBirth,
-            gender,
-            address
+            title,
+            description,
+            link,
+            playListName,
+            postId
         } = updateData;
 
-        const user = await User.findById(userId);
+        const fetchPost = await YouTubePost.findById(postId);
 
-        if (!user) {
+        if (!fetchPost) {
             throw new Error('User not found');
         }
 
         // Update fields
-        if (firstName) user.firstName = firstName;
-        if (lastName) user.lastName = lastName;
-        if (phoneNumber) user.phoneNumber = phoneNumber;
-        if (dateOfBirth) user.dateOfBirth = dateOfBirth;
-        if (gender) user.gender = gender;
-        if (address) user.address = { ...user.address, ...address };
+        if (title) fetchPost.title = title;
+        if (description) fetchPost.description = description;
+        if (link) fetchPost.link = link;
+        if (playListName) fetchPost.playListName = playListName;
 
-        await user.save();
 
-        return getUserResponse(user);
+        await fetchPost.save();
+
+        return fetchPost;
     } catch (error) {
         throw error;
     }
@@ -56,4 +87,6 @@ const updateYoutubeItem = async (userId, updateData) => {
 export {
     addYoutubeItem,
     updateYoutubeItem,
+    getYoutubeItem,
+    deleteYoutubePost
 };

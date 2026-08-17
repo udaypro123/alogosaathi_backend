@@ -3,7 +3,9 @@
 import express from 'express';
 import {
   AddYoutubeItem,
-  UpdateYoutubeItem
+  UpdateYoutubeItem,
+  getALLYoutubePost,
+  DeleteYoutubePost
 } from '../controllers/youtube.controller.js';
 
 import { protect, authRateLimit, authorize } from '../middleware/auth.js';
@@ -16,7 +18,10 @@ const router = express.Router();
 
 // Protected routes
 router.post('/addyoutubepost', protect, authorize("admin"), AddYoutubeItem);
+router.get('/getallyoutubeport', protect, authorize("admin", "users"), getALLYoutubePost);
+router.delete('/deleteyoutubeport', protect, authorize("admin"), DeleteYoutubePost);
 router.put('/updateyoutubepost', protect, authorize("admin"), UpdateYoutubeItem);
+
 
 
 export default router;

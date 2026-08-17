@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-const youtubepostSchema = new mongoose.Schema({
+const youtubePostSchema = new mongoose.Schema({
   ownerId: {
     type: String,
     required: true,
@@ -17,7 +17,7 @@ const youtubepostSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true,
-    maxLength: [400, 'Last name cannot exceed 50 characters']
+    minLength: [30, 'please Enter min 30 characters']
   },
 
   link:{
@@ -25,14 +25,20 @@ const youtubepostSchema = new mongoose.Schema({
     required:true,
     default:""
   },
+  playListName:{
+    type: String,
+    required:true,
+    default:""
+  },
   role: {
     type: String,
     enum: ['users', 'admin'],
-    default: 'Admin'
+    default: 'admin'
   },
 
-  profilePicture: {
+  thumbnail: {
     type: String,
+    // required:true,
     default: ''
   },
   profileImagePublicId: {
@@ -46,7 +52,8 @@ const youtubepostSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+youtubePostSchema.index({ title: 1 });
+youtubePostSchema.index({ playListName: 1 });
 
-
-const YouTubePost = mongoose.model('YouTubePost', youtubepostSchema);
+const YouTubePost = mongoose.model('YouTubePost', youtubePostSchema);
 export default YouTubePost;
