@@ -4,6 +4,8 @@ import { deleteFile } from '../utils/fileUpload.js'
 // Get all users with pagination and filtering
 const getAllUsers = async (queryParams) => {
   try {
+
+    console.log("queryParams----------->",queryParams)
     const page = parseInt(queryParams.page) || 1;
     const limit = parseInt(queryParams.limit) || 10;
     const skip = (page - 1) * limit;
@@ -25,20 +27,20 @@ const getAllUsers = async (queryParams) => {
     }
 
     const users = await User.find(filter)
-      .select('-password -refreshTokens')
+      .select('-password -refreshTokens -profileImagePublicId -emailVerificationToken')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await User.countDocuments(filter);
+    const count = await User.countDocuments(filter);
 
     return {
       users,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        count,
+        pages: Math.ceil(count / limit)
       }
     };
   } catch (error) {

@@ -10,8 +10,9 @@ import {
 // @access  Private/Admin
 const getUsers = async (req, res, next) => {
   try {
+    console.log("req.query--------->",req.query)
     const result = await getAllUsers(req.query);
-
+   
     res.status(200).json({
       success: true,
       data: result.users,
