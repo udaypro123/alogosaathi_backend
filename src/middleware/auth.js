@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken"
-import User from "../models/User.models.js"
+import {User} from "../models/User.models.js"
 import rateLimit from 'express-rate-limit';
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
@@ -75,6 +75,8 @@ const authorize = (...roles) => {
     if (req.method === 'OPTIONS') {
       return next();
     }
+
+    console.log("nnnnnnnnnnnnnnnnnnn", req.user)
 
     // console.log('Authorizing roles1:', roles);
     // console.log('Authorizing req.user', req.user ? req.user.role : 'No user');

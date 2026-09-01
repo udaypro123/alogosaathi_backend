@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { type } from 'os';
 
 const userSchema = new mongoose.Schema({
   ownerId: {
@@ -41,7 +42,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['users', 'admin'],
+    enum: ['users', 'admin', 'student', 'teacher', 'parent', 'school', 'college', 'university','mentor', 'counsellor', 'institute', 'organization'],
     default: 'users'
   },
   phoneNumber: {
@@ -263,5 +264,47 @@ userSchema.statics.getAuthenticated = async function (email, password) {
 };
 
 
+
+/// Query realted schema 
+
+const sendQuerrySchema = new mongoose.Schema({
+
+  fullName: {
+    type: String,
+    required: [true,"Full name is required"],
+    trim: true,
+    maxLength: [50, 'Full Name cannot exceed 50 characters']
+
+  },
+
+  mobile: {
+    type: Number,
+    required: [true, "Mobile Number is Required"],
+  },
+  schoolname: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    trim: true,
+  },
+  educationLevel: {
+    type: String,
+    required: true
+
+  },
+  message: {
+    type: String,
+    trim: true,
+    maxLength: [300, 'message cannot exceed 300 characters']
+  }
+
+}, {
+  timestamps: true,
+})
+
+
 const User = mongoose.model('User', userSchema);
-export default User;
+const SendQuerry = mongoose.model('SendQuerry', sendQuerrySchema);
+export  {User, SendQuerry};

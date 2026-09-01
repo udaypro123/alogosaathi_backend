@@ -43,7 +43,16 @@ export const upload = multer({
   storage,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE || '', 10) || 5 * 1024 * 1024,
-    files: 1
+    files: 3
+  },
+  fileFilter
+});
+
+export const uploadMultiple = multer({
+  storage,
+  limits: {
+    fileSize: parseInt(process.env.MAX_FILE_SIZE || '', 10) || 5 * 1024 * 1024,
+    files: 3
   },
   fileFilter
 });

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { upload, uploadFile, uploadToCloudinary, deleteFile } from '../utils/fileUpload.js';
 import { authorize, protect } from '../middleware/auth.js';
-import User from '../models/User.models.js';
+import {User} from '../models/User.models.js';
 
 const router = Router();
 

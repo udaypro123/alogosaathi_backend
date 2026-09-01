@@ -10,6 +10,8 @@ import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/users.route.js';
 import uploadRoutes from './routes/upload.route.js';
 import youtubeRoutes from './routes/youtube.route.js';
+import feedbackAndQuerryRoutes from "./routes/feedbackAndQuerry.js"
+import templateRoutes from './routes/templates.route.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -74,6 +76,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/fileUpload', uploadRoutes);
 app.use('/api/youtube', youtubeRoutes);
+app.use('/api/user', feedbackAndQuerryRoutes);
+app.use('/api/template', templateRoutes);
 
 // // ---- STATIC FILES ----
 // app.use('/uploads', express.static('uploads'));

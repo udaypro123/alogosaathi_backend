@@ -1,11 +1,11 @@
-import User from '../models/User.models.js'
+
+import { SendQuerry, User } from '../models/User.models.js';
 import { deleteFile } from '../utils/fileUpload.js'
 
 // Get all users with pagination and filtering
 const getAllUsers = async (queryParams) => {
   try {
 
-    console.log("queryParams----------->",queryParams)
     const page = parseInt(queryParams.page) || 1;
     const limit = parseInt(queryParams.limit) || 10;
     const skip = (page - 1) * limit;
@@ -96,6 +96,51 @@ const updateUserProfile = async (userId, updateData) => {
     throw error;
   }
 };
+
+// Update user profile
+const userQuerry = async (data) => {
+  try {
+    logger.debug("to checking data in dbc , userQuerry function ", data)
+
+    const responcedata = await SendQuerry.create(data)
+    await responcedata.save()
+    return responcedata;
+
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+const GetAllUsersQuery = async (queryParams) => {
+  try {
+
+    // const page = parseInt(queryParams.page) || 1;
+    // const limit = parseInt(queryParams.limit) || 10;
+    // const skip = (page - 1) * limit;
+
+  
+    const users = await SendQuerry.find()
+      .sort({ createdAt: -1 })
+      // .skip(skip)
+      // .limit(limit);
+
+    const count = await SendQuerry.countDocuments();
+
+    return {
+      users,
+      pagination: {
+        // page,
+        // limit,
+        count,
+      }
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 
 // const changePassword = async (userId, currentPassword, newPassword) => {
 //   try {
@@ -313,5 +358,7 @@ export  {
   getUserStatistics,
   getUserResponse,
   searchUsers,
-  getUsersByRole
+  getUsersByRole,
+  userQuerry,
+  GetAllUsersQuery
 };

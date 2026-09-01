@@ -7,7 +7,7 @@ const addYoutubeItem = async (data) => {
         const responsedata = await YouTubePost.create(data);
 
         if (!responsedata) {
-            throw new Error('User not found');
+            throw new Error('video failed to add');
         }
 
         return responsedata;

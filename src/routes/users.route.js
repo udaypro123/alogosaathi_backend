@@ -3,6 +3,7 @@
 import express from 'express';
 import {
   getUsers,
+  usersQuery,
   // getUser,
   // updateUser,
   // changePassword,

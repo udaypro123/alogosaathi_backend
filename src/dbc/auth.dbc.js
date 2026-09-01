@@ -1,5 +1,5 @@
 
-import User from "../models/User.models.js"
+import {User} from "../models/User.models.js"
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
 import { sendEmail , emailTemplates} from "../utils/emailService.js";
