@@ -18,7 +18,7 @@ const router = express.Router();
 
 // Protected routes
 router.post('/addyoutubepost', protect, authorize("admin"), AddYoutubeItem);
-router.get('/getallyoutubeport', protect, authorize("admin", "users"), getALLYoutubePost);
+router.get('/getallyoutubeport', protect, authorize("admin", "users", "student"), getALLYoutubePost);
 router.delete('/deleteyoutubeport', protect, authorize("admin"), DeleteYoutubePost);
 router.put('/updateyoutubepost', protect, authorize("admin"), UpdateYoutubeItem);
 

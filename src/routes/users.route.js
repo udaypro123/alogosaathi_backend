@@ -27,7 +27,7 @@ router.use(protect);
 
 // Admin only routes
 // router.get('/stats', authorize('admin'), getUserStats);
-router.get('/', authorize('admin'), getUsers);
+router.get('/', authorize('admin', 'users','student'), getUsers);
 
 
 export default router;

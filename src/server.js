@@ -44,8 +44,9 @@ app.use(compression());
 // ---- MONGODB CONNECTION ----
 connectDB()
   .then(() => 
-  app.listen(process.env.PORT || 8000, ()=>{
-    logger.info('✅ Connected to MongoDB in Server.js');
+  app.listen(process.env.PORT || 5000, ()=>{
+    logger.info(`✅ Connected to MongoDB in Server.js ${process.env.PORT}`);
+    
   }))
   .catch((error) => {
     logger.error('❌ MongoDB connection error:', error);
@@ -68,6 +69,7 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
 
 // // ---- ROUTES ----
 app.use('/api/auth', authRoutes);
