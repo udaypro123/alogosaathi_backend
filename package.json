@@ -8,6 +8,7 @@
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/server.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tavily/core": "^0.5.11",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.7.0",
@@ -27,7 +28,9 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "nanoid": "^5.1.6",
+    "node-cron": "^3.0.3",
     "nodemailer": "^9.0.5",
+    "openai": "^7.17.0",
     "razorpay": "^2.9.6",
     "serverless-http": "^3.2.0",
     "superagent": "^10.2.3",

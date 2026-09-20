@@ -28,20 +28,25 @@ const parseExistingImages = (bodyImages) => {
 
 const handleTemplateImageUpload = async (req, res, next) => {
   try {
+    console.log("handleTemplateImageUpload..............",req.files || [])
     const uploadedFiles = req.files || [];
     if (!uploadedFiles.length) {
       return next();
     }
-
+    
     const existingImages = parseExistingImages(req.body.images);
+    console.log("handleTemplateImageUpload.............. existingImages ...........", existingImages )
     const uploadedUrls = [];
-
+    
     for (const file of uploadedFiles) {
       const tempPath = await uploadFile(file);
       const result = await uploadToCloudinary(tempPath, 'template-images');
       await deleteFile(tempPath);
       uploadedUrls.push(result?.secure_url || result?.url || '');
     }
+    
+    console.log("handleTemplateImageUpload.............. uploadedFiles ...........", uploadedFiles )
+    console.log("uploadedUrls..................",uploadedUrls)
 
     const mergedImages = [...new Set([...existingImages, ...uploadedUrls.filter(Boolean)])].slice(0, 3);
     req.body.images = mergedImages;
@@ -54,9 +59,9 @@ const handleTemplateImageUpload = async (req, res, next) => {
   }
 };
 
-router.post('/addNews', protect, authorize('admin'),  upload.array('images', 3), handleTemplateImageUpload, addNews);
+router.post('/addNews', protect, authorize('admin'),  upload.array('images', 10), handleTemplateImageUpload, addNews);
 router.get('/getNews', getNews);
-router.put('/updateNews', protect, authorize('admin'), upload.array('images', 3), handleTemplateImageUpload, updateNews);
+router.put('/updateNews', protect, authorize('admin'), upload.array('images', 10), handleTemplateImageUpload, updateNews);
 router.delete('/deleteNews', protect, authorize('admin'), deleteNews);
 
 export default router;

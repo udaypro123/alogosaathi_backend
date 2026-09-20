@@ -14,8 +14,11 @@ import feedbackAndQuerryRoutes from "./routes/feedbackAndQuerry.js"
 import templateRoutes from './routes/templates.route.js';
 import ourClientRoutes from './routes/ourClient.route.js';
 import newsRoutes from './routes/news.route.js';
+import coursesRoutes from './routes/courses.route.js';
 import connectDB from './db/index.js';
 import { app } from './app.js';
+import { startAINewsCron } from './jobs/aiNews.cron.js';
+import { startAICourseCron } from './jobs/aiCourse.cron.js';
 
 dotenv.config({
   path:"./.env"
@@ -43,11 +46,14 @@ app.use(compression());
 
 // ---- MONGODB CONNECTION ----
 connectDB()
-  .then(() => 
-  app.listen(process.env.PORT || 5000, ()=>{
-    logger.info(`✅ Connected to MongoDB in Server.js ${process.env.PORT}`);
-    
-  }))
+  .then(() => {
+    startAINewsCron();
+    startAICourseCron();
+    app.listen(process.env.PORT || 5000, ()=>{
+      logger.info(`✅ Connected to MongoDB in Server.js ${process.env.PORT}`);
+      
+    })
+  })
   .catch((error) => {
     logger.error('❌ MongoDB connection error:', error);
     process.exit(1);
@@ -80,6 +86,7 @@ app.use('/api/user', feedbackAndQuerryRoutes);
 app.use('/api/template', templateRoutes);
 app.use('/api/client', ourClientRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/course', coursesRoutes);
 
 // // ---- STATIC FILES ----
 // app.use('/uploads', express.static('uploads'));

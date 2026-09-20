@@ -33,34 +33,15 @@ const newsSchema = new mongoose.Schema(
 
         // Multiple images
         images: {
-            type: [
-                {
-                    url: {
-                        type: String,
-                        required: true,
-                        trim: true,
-                    },
-                    alt: {
-                        type: String,
-                        default: "",
-                        trim: true,
-                    },
-                    caption: {
-                        type: String,
-                        default: "",
-                        trim: true,
-                    },
-                },
-            ],
-            required: [true, "At least one news image is required"],
+            type: [String],
+            default: [],
             validate: {
                 validator: function (images) {
-                    return images && images.length > 0;
+                    return Array.isArray(images);
                 },
-                message: "At least one news image is required",
+                message: "Images must be an array",
             },
         },
-
         // Optional video
         video: {
             url: {

@@ -27,14 +27,14 @@ const validateRegister = [
     .matches(/^[a-zA-Z\s]+$/)
     .withMessage('First name can only contain letters and spaces'),
 
-  body('lastName')
-    .trim()
-    .notEmpty()
-    .withMessage('Last name is required')
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Last name must be between 2 and 50 characters')
-    .matches(/^[a-zA-Z\s]+$/)
-    .withMessage('Last name can only contain letters and spaces'),
+  // body('lastName')
+  //   .trim()
+  //   .notEmpty()
+  //   .withMessage('Last name is required')
+  //   .isLength({ min: 2, max: 50 })
+  //   .withMessage('Last name must be between 2 and 50 characters')
+  //   .matches(/^[a-zA-Z\s]+$/)
+  //   .withMessage('Last name can only contain letters and spaces'),
 
   body('email')
     .trim()

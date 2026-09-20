@@ -48,7 +48,7 @@ class AuthService {
         password,
         phoneNumber: phoneNumber,
         // role: role || 'admin',
-        role: role || 'users',
+        role: role || 'student',
         ownerId
       });
 

@@ -76,7 +76,7 @@ const authorize = (...roles) => {
       return next();
     }
 
-    console.log("nnnnnnnnnnnnnnnnnnn", req.user)
+    // console.log("nnnnnnnnnnnnnnnnnnn", req.user)
 
     // console.log('Authorizing roles1:', roles);
     // console.log('Authorizing req.user', req.user ? req.user.role : 'No user');

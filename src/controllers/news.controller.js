@@ -26,7 +26,6 @@ const addNews = async (req, res, next) => {
 
 const getNews = async (req, res, next) => {
   try {
-    console.log("controller is calling .............")
     const updatedUser = await GetNews();
 
     res.status(200).json({
