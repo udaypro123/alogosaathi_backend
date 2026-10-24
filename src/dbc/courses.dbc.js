@@ -30,6 +30,20 @@ const GetAllCourses = async () => {
   }
 };
 
+const GetCourseCatalog = async () => {
+  return Course.aggregate([
+    {
+      $project: {
+        courseName: 1,
+        chaptersCount: {
+          $size: { $ifNull: ["$chapters", []] },
+        },
+      },
+    },
+    { $sort: { courseName: 1 } },
+  ]);
+};
+
 // Get single course by ID
 const GetCourseById = async (id) => {
   try {
@@ -148,6 +162,7 @@ const SetTopicContentBlocks = async (courseId, chapterIndex, topicIndex, blocks,
 export {
   AddCourse,
   GetAllCourses,
+  GetCourseCatalog,
   GetCourseById,
   UpdateCourse,
   DeleteCourse,

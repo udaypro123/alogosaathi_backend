@@ -77,7 +77,6 @@ class AuthService {
       // Use the static method to authenticate
       const result = await User.getAuthenticated(email, password);
       
-      // console.log("result", result)
 
       if (!result.user) {
         let message = 'Invalid credentials';
@@ -313,7 +312,7 @@ class AuthService {
         html: emailContent.html
       });
     } catch (error) {
-      console.error('Error sending verification email:', error);
+      console.error('Verification email delivery failed');
       // Don't fail registration if email fails
     }
   }
@@ -331,7 +330,7 @@ class AuthService {
         html: emailContent.html
       });
     } catch (error) {
-      console.error('Error sending password reset email:', error);
+      console.error('Password reset email delivery failed');
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();

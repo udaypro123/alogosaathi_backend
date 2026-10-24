@@ -1,5 +1,9 @@
 import { authService } from '../dbc/index.js'
 import { ApiError } from '../utils/apiError.js';
+import { OAuth2Client } from 'google-auth-library';
+import { User } from '../models/User.models.js';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Helper function to send token response
 const sendTokenResponse = (user, tokens, statusCode, res) => {
@@ -113,8 +117,8 @@ const refreshToken = async (req, res, next) => {
     const options = {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development',
-      sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax'
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
 
     res
@@ -211,6 +215,74 @@ const resendVerification = async (req, res, next) => {
   }
 };
 
+// @desc    Google authentication
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new ApiError(400, 'Google ID token is required');
+    }
+
+    // Verify Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture, sub } = payload;
+
+    if (!email) {
+      throw new ApiError(400, 'Google account email is required');
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user from Google data
+      user = await User.create({
+        firstName: given_name || 'User',
+        lastName: family_name || '',
+        email: email,
+        password: sub + Date.now(), // Random password since Google auth doesn't use password
+        phoneNumber: '', // Will be empty for Google users
+        role: 'student',
+        isEmailVerified: true,
+        profilePicture: picture || '',
+      });
+    } else {
+      // Update existing user
+      if (!user.profilePicture && picture) {
+        user.profilePicture = picture;
+      }
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+      }
+      await user.save();
+    }
+
+    // Generate tokens
+    const tokens = await authService.generateTokens(user);
+
+    res.status(200).json({
+      success: true,
+      message: 'Google authentication successful',
+      tokens,
+      user: authService.getUserResponse(user)
+    });
+  } catch (error) {
+    console.error('Google authentication failed');
+    res.status(401).json({
+      success: false,
+      message: error.message || 'Google authentication failed'
+    });
+  }
+};
+
 export {
   register,
   login,
@@ -220,5 +292,6 @@ export {
   forgotPassword,
   resetPassword,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  googleAuth
 };

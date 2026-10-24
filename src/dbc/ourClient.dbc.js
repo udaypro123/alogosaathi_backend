@@ -35,10 +35,8 @@ const GetallClient = async () => {
 const DeleteClient = async (data) => {
     try {
 
-        console.log("dbc data check ------------->", data)
         const {id} = data;
         const responsedata = await OurClinet.deleteOne({_id:id});
-        console.log("------------->", responsedata)
 
         if (!responsedata) {
             throw new Error('User not found');

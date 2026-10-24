@@ -100,8 +100,6 @@ const updateUserProfile = async (userId, updateData) => {
 // Update user profile
 const userQuerry = async (data) => {
   try {
-    logger.debug("to checking data in dbc , userQuerry function ", data)
-
     const responcedata = await SendQuerry.create(data)
     await responcedata.save()
     return responcedata;

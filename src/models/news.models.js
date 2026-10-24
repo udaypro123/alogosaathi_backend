@@ -186,6 +186,18 @@ newsSchema.index({
 });
 
 newsSchema.index({
+    category: 1,
+    isPublished: 1,
+    publishedAt: -1,
+    _id: -1,
+});
+
+newsSchema.index({
+    isPublished: 1,
+    category: 1,
+});
+
+newsSchema.index({
     isPublished: 1,
     publishedAt: -1,
 });

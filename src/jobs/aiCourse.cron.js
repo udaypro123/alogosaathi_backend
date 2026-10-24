@@ -10,10 +10,10 @@ export const startAICourseCron = () => {
   cron.schedule("0 0 * * *", async () => {
     console.log("[AI Course Cron] Running daily interview questions job...");
     try {
-      const result = await addInterviewQuestionsAutomatically();
-      console.log("[AI Course Cron] Job finished:", result);
-    } catch (error) {
-      console.error("[AI Course Cron] Job failed:", error.message);
+      await addInterviewQuestionsAutomatically();
+      console.log("[AI Course Cron] Job finished.");
+    } catch {
+      console.error("[AI Course Cron] Job failed.");
     }
   });
 

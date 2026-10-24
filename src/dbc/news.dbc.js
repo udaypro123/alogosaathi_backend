@@ -1,9 +1,18 @@
 import News from "../models/news.models.js";
 
+const DEFAULT_NEWS_IMAGE =
+    "https://res.cloudinary.com/dyxmtrlqg/image/upload/v1792822562/template-images/iv40i5ftwbxqtp7toy7r.jpg";
+
 // Get single fetchPost by ID
 const AddNews = async (data) => {
     try {
-        const responsedata = await News.create(data);
+        const images = Array.isArray(data.images)
+            ? data.images.filter((image) => typeof image === "string" && image.trim())
+            : [];
+        const responsedata = await News.create({
+            ...data,
+            images: images.length ? images : [DEFAULT_NEWS_IMAGE],
+        });
 
         if (!responsedata) {
             throw new Error('video failed to add');
@@ -28,14 +37,68 @@ const GetNews = async () => {
     }
 };
 
+const GetNewsCategories = async () => {
+    return News.distinct("category", { isPublished: true });
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildNewsFilter = (category, search, isPublished) => {
+    const filter = {};
+    if (category) {
+        filter.category = category;
+    }
+    if (typeof isPublished === "boolean") {
+        filter.isPublished = isPublished;
+    }
+    if (search) {
+        const searchPattern = new RegExp(escapeRegex(search), "i");
+        filter.$or = [
+            { title: searchPattern },
+            { shortDescription: searchPattern },
+            { content: searchPattern },
+            { category: searchPattern },
+            { subCategory: searchPattern },
+            { "author.name": searchPattern },
+            { "source.name": searchPattern },
+            { tags: searchPattern },
+        ];
+    }
+    return filter;
+};
+
+const findNewsPage = async (filter, skip, limit) => {
+    const items = await News.find(filter)
+        .sort({ publishedAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(limit + 1)
+        .lean();
+    const hasMore = items.length > limit;
+
+    if (hasMore) {
+        items.pop();
+    }
+
+    return { items, hasMore };
+};
+
+const GetNewsByCategory = async (category, skip, limit, search) => {
+    return findNewsPage(buildNewsFilter(category, search, true), skip, limit);
+};
+
+const GetAdminNewsCategories = async () => {
+    return News.distinct("category");
+};
+
+const GetAdminNewsByCategory = async (category, skip, limit, search) => {
+    return findNewsPage(buildNewsFilter(category, search), skip, limit);
+};
 
 const DeleteNews = async (data) => {
     try {
 
-        console.log("dbc data check ------------->", data)
         const {id} = data;
         const responsedata = await News.deleteOne({_id:id});
-        console.log("------------->", responsedata)
 
         if (!responsedata) {
             throw new Error('User not found');
@@ -122,4 +185,8 @@ export {
     UpdateNews,
     DeleteNews,
     GetNews,
+    GetNewsCategories,
+    GetNewsByCategory,
+    GetAdminNewsCategories,
+    GetAdminNewsByCategory,
 };

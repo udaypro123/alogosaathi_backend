@@ -5,7 +5,6 @@ import { AddClient, DeleteClient, GetallClient, UpdateClient } from "../dbc/ourC
 const addClient = async (req, res, next) => {
   try {
 
-    logger.debug("post analyse item send from frontend is ok or not", req.body)
     // saving data into db
     const data = await AddClient(req.body);
 
@@ -46,7 +45,6 @@ const getallClient = async (req, res, next) => {
 
 const deleteClient = async (req, res, next) => {
   try {
-    console.log("req.body  deleteClient-------------->", req.body)
     const deletedUser = await DeleteClient(req.body);
 
     res.status(200).json({
@@ -64,7 +62,6 @@ const deleteClient = async (req, res, next) => {
 
 const updateClient = async (req, res, next) => {
   try {
-    logger.debug("post analyse item send from frontend is ok or not", req.body)
     const updatedClient = await UpdateClient(req.body);
 
     res.status(200).json({

@@ -52,7 +52,6 @@ const validateRegister = [
 
   body('confirmPassword')
     .custom((value, { req }) => {
-      // console.log("req.body.password", req.body.password, value)
       if (value !== req.body.password) {
         throw new Error('Passwords do not match');
       }

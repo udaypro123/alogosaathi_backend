@@ -1,6 +1,10 @@
 import express from 'express';
 import {
   getNews,
+  getNewsCategories,
+  getNewsByCategory,
+  getAdminNewsCategories,
+  getAdminNewsByCategory,
   addNews,
   deleteNews,
   updateNews,
@@ -28,14 +32,12 @@ const parseExistingImages = (bodyImages) => {
 
 const handleTemplateImageUpload = async (req, res, next) => {
   try {
-    console.log("handleTemplateImageUpload..............",req.files || [])
     const uploadedFiles = req.files || [];
     if (!uploadedFiles.length) {
       return next();
     }
     
     const existingImages = parseExistingImages(req.body.images);
-    console.log("handleTemplateImageUpload.............. existingImages ...........", existingImages )
     const uploadedUrls = [];
     
     for (const file of uploadedFiles) {
@@ -45,9 +47,6 @@ const handleTemplateImageUpload = async (req, res, next) => {
       uploadedUrls.push(result?.secure_url || result?.url || '');
     }
     
-    console.log("handleTemplateImageUpload.............. uploadedFiles ...........", uploadedFiles )
-    console.log("uploadedUrls..................",uploadedUrls)
-
     const mergedImages = [...new Set([...existingImages, ...uploadedUrls.filter(Boolean)])].slice(0, 3);
     req.body.images = mergedImages;
     next();
@@ -60,6 +59,10 @@ const handleTemplateImageUpload = async (req, res, next) => {
 };
 
 router.post('/addNews', protect, authorize('admin'),  upload.array('images', 10), handleTemplateImageUpload, addNews);
+router.get('/categories', getNewsCategories);
+router.get('/by-category', getNewsByCategory);
+router.get('/admin/categories', protect, authorize('admin'), getAdminNewsCategories);
+router.get('/admin/by-category', protect, authorize('admin'), getAdminNewsByCategory);
 router.get('/getNews', getNews);
 router.put('/updateNews', protect, authorize('admin'), upload.array('images', 10), handleTemplateImageUpload, updateNews);
 router.delete('/deleteNews', protect, authorize('admin'), deleteNews);

@@ -65,9 +65,7 @@ const updateUser = async (req, res, next) => {
 const usersQuery = async (req, res, next) => {
   try {
 
-    logger.debug("checking data while sending from frontend userQueryy controller.js", req.body)
-    const UserQuery = await userQuerry(req.body);
-    logger.debug("checking data after Saved DB from frontend userQueryy controller.js", UserQuery)
+    await userQuerry(req.body);
 
     res.status(200).json({
       success: true,

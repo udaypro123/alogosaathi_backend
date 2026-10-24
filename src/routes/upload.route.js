@@ -11,9 +11,6 @@ router.post(
     upload.single("file"),
     async (req, res) => {
         try {
-            console.log("User:", req.user);
-            console.log("File:", req.file);
-
             if (!req.file) {
                 return res.status(400).json({
                     error: "No file uploaded"
@@ -46,8 +43,6 @@ router.post(
             }
 
 
-            console.log("result",result)
-
             user.profilePicture = result.url;
             user.profileImagePublicId = result.public_id;
 
@@ -59,14 +54,9 @@ router.post(
                 public_id: result.public_id
             });
 
-        } catch (e) {
-            console.error(
-                "Profile image upload error:",
-                e
-            );
-
+        } catch {
             return res.status(500).json({
-                error: e.message
+                error: "Profile image upload failed"
             });
         }
     }

@@ -5,7 +5,6 @@ import { addYoutubeItem, deleteYoutubePost, getYoutubeItem, updateYoutubeItem } 
 const AddYoutubeItem = async (req, res, next) => {
   try {
 
-    logger.debug("post analyse item send from frontend is ok or not", req.body)
     // saving data into db
     const data = await addYoutubeItem(req.body);
 
@@ -46,7 +45,6 @@ const getALLYoutubePost = async (req, res, next) => {
 
 const DeleteYoutubePost = async (req, res, next) => {
   try {
-    console.log("req.body  DeleteYoutubePost-------------->", req.body)
     const deletedUser = await deleteYoutubePost(req.body);
 
     res.status(200).json({
@@ -64,7 +62,6 @@ const DeleteYoutubePost = async (req, res, next) => {
 
 const UpdateYoutubeItem = async (req, res, next) => {
   try {
-    logger.debug("post analyse item send from frontend is ok or not", req.body)
     const updatedYoutubePost = await updateYoutubeItem(req.body);
 
     res.status(200).json({

@@ -3,6 +3,7 @@ import Course from "../models/courses.models.js";
 import {
   AddCourse,
   GetAllCourses,
+  GetCourseCatalog,
   GetCourseById,
   UpdateCourse,
   DeleteCourse,
@@ -26,8 +27,6 @@ const addCourse = async (req, res, next) => {
       updatedBy: req.user._id,
     };
 
-    console.log("Add course payload:", payload);
-
     const data = await AddCourse(payload);
 
     res.status(200).json({
@@ -36,7 +35,7 @@ const addCourse = async (req, res, next) => {
       data,
     });
   } catch (error) {
-    console.error("Add course error:", error);
+    logger.error("Add course request failed", { errorName: error.name });
     res.status(400).json({
       success: false,
       message: error.message,
@@ -51,6 +50,22 @@ const getAllCourses = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Courses fetched successfully",
+      data: courses,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getCourseCatalog = async (req, res) => {
+  try {
+    const courses = await GetCourseCatalog();
+    res.status(200).json({
+      success: true,
+      message: "Course catalog fetched successfully",
       data: courses,
     });
   } catch (error) {
@@ -303,6 +318,7 @@ const setTopicContentBlocks = async (req, res, next) => {
 export {
   addCourse,
   getAllCourses,
+  getCourseCatalog,
   getCourseById,
   updateCourse,
   deleteCourse,

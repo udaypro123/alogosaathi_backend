@@ -119,7 +119,6 @@ userSchema.pre('save', async function (next) {
 
 // Instance method to check password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  // console.log("candidatePassword", candidatePassword, this.password)
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
@@ -219,13 +218,11 @@ userSchema.statics.failedLogin = {
 
 // Static method for authentication
 userSchema.statics.getAuthenticated = async function (email, password) {
-  // console.log("emailpass", email, password)
   const user = await this.findOne({ email, isActive: true }).select('+password');
 
   if (!user) {
     return { user: null, reason: this.failedLogin.NOT_FOUND };
   }
-  // console.log("userrrr", user)
   // Check if account is locked
   if (user.isLocked) {
     // Check if lock has expired

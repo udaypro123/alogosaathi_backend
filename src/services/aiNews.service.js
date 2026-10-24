@@ -146,10 +146,7 @@ async function searchNewsFromRSS() {
 
       results.push(...items);
     } catch (error) {
-      console.error(
-        "[AI News] RSS error:",
-        error.message
-      );
+      console.error("[AI News] RSS request failed");
     }
   }
 
@@ -241,8 +238,7 @@ ${JSON.stringify(rawResults)}
         break;
       } catch (error) {
         console.error(
-          `[AI News] Gemini attempt ${attempt} failed:`,
-          error.message
+          `[AI News] Gemini attempt ${attempt} failed`
         );
 
         if (attempt === 3) {
@@ -314,10 +310,7 @@ ${JSON.stringify(rawResults)}
       ? parsed
       : [];
   } catch (error) {
-    console.error(
-      "[AI News] Gemini error:",
-      error.message
-    );
+    console.error("[AI News] Gemini processing failed");
 
     return [];
   }
@@ -376,10 +369,7 @@ async function uploadNewsImage(imageUrl) {
       null
     );
   } catch (error) {
-    console.error(
-      "[AI News] Image upload error:",
-      error.message
-    );
+    console.error("[AI News] Image upload failed");
 
     return null;
   } finally {
@@ -420,13 +410,6 @@ export const fetchAndStoreNewsAutomatically =
     try {
       console.log(
         "[AI News] Starting automated news fetch..."
-      );
-
-      console.log(
-        "[AI News] Gemini API key:",
-        GEMINI_API_KEY
-          ? `${GEMINI_API_KEY.slice(0, 8)}...`
-          : "NOT FOUND"
       );
 
       // 1. RSS
@@ -542,10 +525,7 @@ export const fetchAndStoreNewsAutomatically =
             `[AI News] Added: ${item.title}${image ? "" : " (no image)"}`
           );
         } catch (error) {
-          console.error(
-            "[AI News] Save error:",
-            error.message
-          );
+          console.error("[AI News] News item save failed");
         }
       }
 
@@ -559,15 +539,12 @@ export const fetchAndStoreNewsAutomatically =
         message: `Added ${addedCount} news items`,
       };
     } catch (error) {
-      console.error(
-        "[AI News] Main error:",
-        error.message
-      );
+      console.error("[AI News] Automated job failed");
 
       return {
         success: false,
         added: 0,
-        error: error.message,
+        error: "Automated news job failed",
       };
     }
   };

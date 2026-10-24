@@ -2,6 +2,7 @@ import express from "express";
 import {
   addCourse,
   getAllCourses,
+  getCourseCatalog,
   getCourseById,
   updateCourse,
   deleteCourse,
@@ -14,7 +15,10 @@ import { upload } from "../utils/fileUpload.js";
 
 const router = express.Router();
 
-// Public / protected read routes
+// The public catalog exposes course names and chapter counts, not course content.
+router.get("/catalog", getCourseCatalog);
+
+// Protected course content routes
 router.get("/", protect, authorize("admin", "users", "student"), getAllCourses);
 router.get("/:id", protect, authorize("admin", "users", "student"), getCourseById);
 

@@ -5,6 +5,8 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import logger from './utils/logger.js';
+import notFound from './middleware/notFound.js';
+import errorHandler from './middleware/errorHandler.js';
 // Import routes
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/users.route.js';
@@ -50,12 +52,12 @@ connectDB()
     startAINewsCron();
     startAICourseCron();
     app.listen(process.env.PORT || 5000, ()=>{
-      logger.info(`✅ Connected to MongoDB in Server.js ${process.env.PORT}`);
+      logger.info('MongoDB connected and HTTP server started');
       
     })
   })
   .catch((error) => {
-    logger.error('❌ MongoDB connection error:', error);
+    logger.error('MongoDB connection failed', { errorName: error.name });
     process.exit(1);
   });
 
@@ -87,6 +89,9 @@ app.use('/api/template', templateRoutes);
 app.use('/api/client', ourClientRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/course', coursesRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 // // ---- STATIC FILES ----
 // app.use('/uploads', express.static('uploads'));

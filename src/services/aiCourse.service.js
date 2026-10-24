@@ -117,8 +117,8 @@ Example:
     }
 
     return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("[AI Course] Gemini error:", error.message);
+  } catch {
+    console.error("[AI Course] Gemini processing failed");
     return [];
   }
 }
@@ -202,12 +202,12 @@ export const addInterviewQuestionsAutomatically = async () => {
       results,
       message: `Added ${totalAdded} interview questions`,
     };
-  } catch (error) {
-    console.error("[AI Course] Job failed:", error.message);
+  } catch {
+    console.error("[AI Course] Automated job failed");
     return {
       success: false,
       added: 0,
-      message: error.message,
+      message: "Automated course job failed",
     };
   }
 };
