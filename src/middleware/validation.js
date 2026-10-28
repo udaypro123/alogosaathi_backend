@@ -110,6 +110,64 @@ const validateLogin = [
   handleValidationErrors
 ];
 
+const validateVerifyEmailOtp = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email')
+    .normalizeEmail(),
+
+  body('otp')
+    .trim()
+    .matches(/^\d{6}$/)
+    .withMessage('Enter the six-digit verification code'),
+
+  handleValidationErrors
+];
+
+const validateRegistrationEmail = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email')
+    .normalizeEmail(),
+
+  handleValidationErrors
+];
+
+const validateCompleteRegistration = [
+  ...validateRegister.slice(0, -1),
+
+  body('verificationToken')
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Email verification is required'),
+
+  body('phoneNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .matches(/^\+?[\d\s-()]+$/)
+    .withMessage('Please enter a valid phone number'),
+
+  handleValidationErrors
+];
+
+const validateResendEmailVerificationOtp = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please enter a valid email')
+    .normalizeEmail(),
+
+  handleValidationErrors
+];
+
 // Password reset validation
 const validateForgotPassword = [
   body('email')
@@ -307,6 +365,10 @@ const validateRating = [
 export  {
   validateRegister,
   validateLogin,
+  validateVerifyEmailOtp,
+  validateRegistrationEmail,
+  validateCompleteRegistration,
+  validateResendEmailVerificationOtp,
   validateForgotPassword,
   validateResetPassword,
   validateChangePassword,

@@ -4,71 +4,215 @@ import jwt from "jsonwebtoken"
 import crypto from "crypto"
 import { sendEmail , emailTemplates} from "../utils/emailService.js";
 import { nanoid } from 'nanoid'
+import { notificationService } from "../services/notification.service.js";
+import { ApiError } from "../utils/apiError.js";
+import { RegistrationVerification } from "../models/RegistrationVerification.models.js";
+
+const OTP_EXPIRY_MS = 10 * 60 * 1000;
+const REGISTRATION_TOKEN_EXPIRY_MS = 15 * 60 * 1000;
+const MAX_OTP_ATTEMPTS = 5;
+
+const getOtpHashSecret = () => {
+  const secret = process.env.OTP_HASH_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new ApiError(500, 'Email verification is not configured.');
+  }
+  return secret;
+};
+
+const hashOtp = (otp) => crypto
+  .createHmac('sha256', getOtpHashSecret())
+  .update(otp)
+  .digest('hex');
 
 class AuthService {
-  // Register new user
-  async registerUser(userData) {
+  async requestRegistrationOtp(email) {
+    getOtpHashSecret();
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser?.isEmailVerified) {
+      throw new ApiError(409, 'An account already exists with this email. Please sign in.');
+    }
+
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = hashOtp(otp);
+    const now = new Date();
+    const verification = await RegistrationVerification.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        $set: {
+          otpHash,
+          otpExpiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
+          attempts: 0,
+          expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS)
+        },
+        $unset: {
+          verifiedAt: 1,
+          verificationTokenHash: 1,
+          verificationTokenExpiresAt: 1,
+          completedAt: 1
+        },
+        $setOnInsert: { email: normalizedEmail }
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
+
     try {
-      let {
+      await notificationService.sendEmailVerificationOtp(normalizedEmail, otp);
+    } catch (error) {
+      await RegistrationVerification.deleteOne({
+        _id: verification._id,
+        otpHash
+      });
+      console.error('Registration OTP email delivery failed.');
+      throw new ApiError(503, 'Unable to send a verification code right now. Please try again.');
+    }
+
+    return {
+      email: normalizedEmail,
+      message: 'A verification code has been sent to your email.'
+    };
+  }
+
+  async verifyRegistrationOtp(email, otp) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const verification = await RegistrationVerification.findOne({
+      email: normalizedEmail,
+      completedAt: { $exists: false }
+    });
+
+    if (!verification || !verification.otpHash) {
+      throw new ApiError(400, 'Invalid or expired verification code.');
+    }
+
+    if (verification.otpExpiresAt <= new Date() || verification.attempts >= MAX_OTP_ATTEMPTS) {
+      await RegistrationVerification.deleteOne({
+        _id: verification._id,
+        otpHash: verification.otpHash
+      });
+      throw new ApiError(400, 'Verification code expired. Request a new code.');
+    }
+
+    const suppliedHash = Buffer.from(hashOtp(otp), 'hex');
+    const storedHash = Buffer.from(verification.otpHash, 'hex');
+    const isMatch = suppliedHash.length === storedHash.length
+      && crypto.timingSafeEqual(suppliedHash, storedHash);
+
+    if (!isMatch) {
+      const updated = await RegistrationVerification.findOneAndUpdate(
+        {
+          _id: verification._id,
+          otpHash: verification.otpHash,
+          attempts: { $lt: MAX_OTP_ATTEMPTS }
+        },
+        { $inc: { attempts: 1 } },
+        { new: true }
+      );
+
+      if (!updated || updated.attempts >= MAX_OTP_ATTEMPTS) {
+        await RegistrationVerification.deleteOne({
+          _id: verification._id,
+          otpHash: verification.otpHash
+        });
+        throw new ApiError(400, 'Too many incorrect codes. Request a new code.');
+      }
+
+      throw new ApiError(400, 'Invalid verification code.');
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const now = new Date();
+    const verified = await RegistrationVerification.findOneAndUpdate(
+      {
+        _id: verification._id,
+        otpHash: verification.otpHash,
+        otpExpiresAt: { $gt: now },
+        attempts: { $lt: MAX_OTP_ATTEMPTS },
+        completedAt: { $exists: false }
+      },
+      {
+        $set: {
+          verifiedAt: now,
+          verificationTokenHash: crypto.createHash('sha256').update(verificationToken).digest('hex'),
+          verificationTokenExpiresAt: new Date(now.getTime() + REGISTRATION_TOKEN_EXPIRY_MS),
+          expiresAt: new Date(now.getTime() + REGISTRATION_TOKEN_EXPIRY_MS)
+        },
+        $unset: { otpHash: 1, otpExpiresAt: 1 }
+      },
+      { new: true }
+    );
+
+    if (!verified) {
+      throw new ApiError(400, 'Invalid or expired verification code.');
+    }
+
+    return {
+      verificationToken,
+      message: 'Email verified. Complete your account details.'
+    };
+  }
+
+  async completeRegistration(userData) {
+    const { email, verificationToken, firstName, lastName, password, phoneNumber } = userData;
+    const normalizedEmail = email.trim().toLowerCase();
+    const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const now = new Date();
+    const verification = await RegistrationVerification.findOneAndUpdate(
+      {
+        email: normalizedEmail,
+        verificationTokenHash: tokenHash,
+        verifiedAt: { $exists: true },
+        verificationTokenExpiresAt: { $gt: now },
+        completedAt: { $exists: false }
+      },
+      { $set: { completedAt: now } },
+      { new: true }
+    );
+
+    if (!verification) {
+      throw new ApiError(400, 'Email verification expired. Verify your email again.');
+    }
+
+    let user = await User.findOne({ email: normalizedEmail });
+    if (user?.isEmailVerified) {
+      throw new ApiError(409, 'An account already exists with this email. Please sign in.');
+    }
+
+    if (user) {
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.password = password;
+      user.phoneNumber = phoneNumber;
+      user.role = 'student';
+      user.isEmailVerified = true;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationExpires = undefined;
+      user.emailVerificationCodeHash = undefined;
+      user.emailVerificationCodeExpires = undefined;
+      user.emailVerificationAttempts = undefined;
+      await user.save();
+    } else {
+      const newUser = await User.create({
         firstName,
         lastName,
-        email,
+        email: normalizedEmail,
         password,
         phoneNumber,
-        role,
-        ownerId
-      } = userData;
-
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        throw new Error('User already exists with this email');
-      }
-
-      if(!ownerId){
-        ownerId = nanoid();
-      }
-      
-      console.log("ownerId", ownerId)
-
-      if(!phoneNumber || phoneNumber.trim() === ''){
-        throw new Error('Phone number is required');
-      }
-      if(email && email.trim() === ''){
-        throw new Error('Email is required');
-      }
-      if(ownerId && ownerId.trim() === ''){
-        throw new Error('ownerId is required');
-      }
-      // Create user
-      const user = await User.create({
-        firstName,
-        lastName,
-        email,
-        password,
-        phoneNumber: phoneNumber,
-        // role: role || 'admin',
-        role: role || 'student',
-        ownerId
+        role: 'student',
+        ownerId: nanoid(),
+        isEmailVerified: true
       });
-
-      // Generate email verification token
-      const verificationToken = user.generateEmailVerificationToken();
-      await user.save();
-
-      // Send verification email
-      await this.sendVerificationEmail(user, verificationToken);
-
-      // Generate tokens
-      const tokens = await this.generateTokens(user);
-
-      return {
-        user: this.getUserResponse(user),
-        tokens
-      };
-    } catch (error) {
-      throw error;
+      user = newUser;
     }
+    const tokens = await this.generateTokens(user);
+
+    await RegistrationVerification.deleteOne({ _id: verification._id });
+
+    return {
+      user: this.getUserResponse(user),
+      tokens
+    };
   }
 
   // Login user
@@ -94,6 +238,10 @@ class AuthService {
         }
 
         throw new Error(message);
+      }
+
+      if (!result.user.isEmailVerified) {
+        throw new ApiError(403, 'Verify your email address before signing in.');
       }
 
       // Update last login
@@ -160,6 +308,10 @@ class AuthService {
 
       if (!user) {
         throw new Error('Invalid refresh token');
+      }
+
+      if (user.isEmailVerified !== true) {
+        throw new ApiError(403, 'Verify your email address before signing in.');
       }
 
       // Generate new access token
@@ -243,7 +395,6 @@ class AuthService {
         throw new Error('Invalid or expired verification token');
       }
 
-      // Update user
       user.isEmailVerified = true;
       user.emailVerificationToken = undefined;
       user.emailVerificationExpires = undefined;
@@ -252,6 +403,140 @@ class AuthService {
       return { message: 'Email verified successfully' };
     } catch (error) {
       throw error;
+    }
+  }
+
+  async verifyEmailOtp(email, otp) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({
+      email: normalizedEmail,
+      isActive: true,
+      isEmailVerified: false
+    });
+
+    if (!user || !user.emailVerificationCodeHash) {
+      throw new ApiError(400, 'Invalid or expired verification code.');
+    }
+
+    if (
+      !user.emailVerificationCodeExpires
+      || user.emailVerificationCodeExpires <= new Date()
+      || user.emailVerificationAttempts >= MAX_OTP_ATTEMPTS
+    ) {
+      await User.updateOne(
+        {
+          _id: user._id,
+          emailVerificationCodeHash: user.emailVerificationCodeHash
+        },
+        {
+          $unset: {
+            emailVerificationCodeHash: 1,
+            emailVerificationCodeExpires: 1
+          },
+          $set: { emailVerificationAttempts: 0 }
+        }
+      );
+      throw new ApiError(400, 'Verification code expired. Request a new code.');
+    }
+
+    const suppliedHash = Buffer.from(hashOtp(otp), 'hex');
+    const storedHash = Buffer.from(user.emailVerificationCodeHash, 'hex');
+    const isMatch = suppliedHash.length === storedHash.length
+      && crypto.timingSafeEqual(suppliedHash, storedHash);
+
+    if (!isMatch) {
+      const updatedUser = await User.findOneAndUpdate(
+        {
+          _id: user._id,
+          isEmailVerified: false,
+          emailVerificationCodeHash: user.emailVerificationCodeHash,
+          emailVerificationAttempts: { $lt: MAX_OTP_ATTEMPTS }
+        },
+        { $inc: { emailVerificationAttempts: 1 } },
+        { new: true }
+      );
+
+      if (!updatedUser || updatedUser.emailVerificationAttempts >= MAX_OTP_ATTEMPTS) {
+        await User.updateOne(
+          {
+            _id: user._id,
+            emailVerificationAttempts: { $gte: MAX_OTP_ATTEMPTS }
+          },
+          {
+            $unset: {
+              emailVerificationCodeHash: 1,
+              emailVerificationCodeExpires: 1
+            },
+            $set: { emailVerificationAttempts: 0 }
+          }
+        );
+        throw new ApiError(400, 'Too many incorrect codes. Request a new code.');
+      }
+
+      throw new ApiError(400, 'Invalid or expired verification code.');
+    }
+
+    const verifiedUser = await User.findOneAndUpdate(
+      {
+        _id: user._id,
+        isEmailVerified: false,
+        emailVerificationCodeHash: user.emailVerificationCodeHash,
+        emailVerificationCodeExpires: { $gt: new Date() },
+        emailVerificationAttempts: { $lt: MAX_OTP_ATTEMPTS }
+      },
+      {
+        $set: { isEmailVerified: true },
+        $unset: {
+          emailVerificationCodeHash: 1,
+          emailVerificationCodeExpires: 1,
+          emailVerificationAttempts: 1
+        }
+      },
+      { new: true }
+    );
+
+    if (!verifiedUser) {
+      throw new ApiError(400, 'Invalid or expired verification code.');
+    }
+
+    const tokens = await this.generateTokens(verifiedUser);
+    return {
+      user: this.getUserResponse(verifiedUser),
+      tokens
+    };
+  }
+
+  async resendEmailVerificationOtp(email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({
+      email: normalizedEmail,
+      isActive: true,
+      isEmailVerified: false
+    });
+
+    if (user) {
+      await this.issueEmailVerificationOtp(user);
+    }
+
+    return {
+      message: 'If this account needs verification, a new code has been sent.'
+    };
+  }
+
+  async issueEmailVerificationOtp(user) {
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    user.emailVerificationCodeHash = hashOtp(otp);
+    user.emailVerificationCodeExpires = new Date(Date.now() + OTP_EXPIRY_MS);
+    user.emailVerificationAttempts = 0;
+    await user.save();
+
+    try {
+      await notificationService.sendEmailVerificationOtp(user.email, otp, user.firstName);
+    } catch {
+      console.error('Verification OTP email delivery failed.');
+      throw new ApiError(503, 'Unable to send a verification code right now. Please try again.');
     }
   }
 

@@ -34,10 +34,58 @@ const sendTokenResponse = (user, tokens, statusCode, res) => {
 // @access  Public
 const register = async (req, res, next) => {
   try {
-    const result = await authService.registerUser(req.body);
+    const result = await authService.requestRegistrationOtp(req.body.email);
+    res.status(202).json({
+      success: true,
+      message: result.message,
+      email: result.email
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const verifyRegistrationOtp = async (req, res) => {
+  try {
+    const result = await authService.verifyRegistrationOtp(req.body.email, req.body.otp);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      verificationToken: result.verificationToken
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const resendRegistrationOtp = async (req, res) => {
+  try {
+    const result = await authService.requestRegistrationOtp(req.body.email);
+    res.status(202).json({
+      success: true,
+      message: result.message,
+      email: result.email
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const completeRegistration = async (req, res) => {
+  try {
+    const result = await authService.completeRegistration(req.body);
     sendTokenResponse(result.user, result.tokens, 201, res);
   } catch (error) {
-    res.status(400).json({
+    res.status(error.statusCode || 400).json({
       success: false,
       message: error.message
     });
@@ -56,7 +104,34 @@ const login = async (req, res, next) => {
     const result = await authService.loginUser(email, password);
     sendTokenResponse(result.user, result.tokens, 200, res);
   } catch (error) {
-    res.status(401).json({
+    res.status(error.statusCode || 401).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const result = await authService.verifyEmailOtp(req.body.email, req.body.otp);
+    sendTokenResponse(result.user, result.tokens, 200, res);
+  } catch (error) {
+    res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+const resendEmailVerificationOtp = async (req, res) => {
+  try {
+    const result = await authService.resendEmailVerificationOtp(req.body.email);
+    res.status(200).json({
+      success: true,
+      message: result.message
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({
       success: false,
       message: error.message
     });
@@ -285,6 +360,9 @@ const googleAuth = async (req, res, next) => {
 
 export {
   register,
+  verifyRegistrationOtp,
+  resendRegistrationOtp,
+  completeRegistration,
   login,
   logout,
   getMe,
@@ -292,6 +370,8 @@ export {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  verifyEmailOtp,
+  resendEmailVerificationOtp,
   resendVerification,
   googleAuth
 };

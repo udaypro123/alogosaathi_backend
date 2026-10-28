@@ -2,8 +2,43 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+}[character]));
+
 // Create transporter
 const createTransporter = () => {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+
+  if (SMTP_HOST) {
+    if (!SMTP_USER || !SMTP_PASS) {
+      throw new Error('SMTP credentials are not configured.');
+    }
+
+    const port = Number(SMTP_PORT || 587);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new Error('SMTP port is invalid.');
+    }
+
+    return nodemailer.createTransport({
+      host: SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS
+      }
+    });
+  }
+
+  if (!process.env.EMAIL_USERNAME || !process.env.EMAIL_PASSWORD) {
+    throw new Error('Email transport is not configured.');
+  }
+
   return nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
@@ -17,9 +52,15 @@ const createTransporter = () => {
 export const sendEmail = async (options) => {
   try {
     const transporter = createTransporter();
+    const senderEmail = process.env.FROM_EMAIL
+      || process.env.SMTP_USER
+      || process.env.EMAIL_USERNAME;
+    const senderName = process.env.EMAIL_SENDER_NAME
+      || (!process.env.SMTP_HOST && process.env.EMAIL_FROM)
+      || 'AlgoSaathi';
 
     const message = {
-      from: `${process.env.EMAIL_FROM} <${process.env.EMAIL_USERNAME}>`,
+      from: `${senderName} <${senderEmail}>`,
       to: options.email,
       subject: options.subject,
       text: options.message,
@@ -111,6 +152,26 @@ export const emailTemplates = {
       </div>
     `
   }),
+
+  emailVerificationOtp: (name, otp) => {
+    const safeName = escapeHtml(name);
+
+    return {
+      subject: 'Your AlgoSaathi verification code',
+      text: `Hello ${name}, your AlgoSaathi verification code is ${otp}. It expires in 10 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #172033;">
+          <h2 style="margin-bottom: 12px;">Verify your email</h2>
+          <p>Hello ${safeName},</p>
+          <p>Use this one-time code to finish creating your AlgoSaathi account:</p>
+          <div style="margin: 28px 0; padding: 18px; border-radius: 12px; background: #f1f5f9; text-align: center; font-size: 32px; font-weight: 700; letter-spacing: 10px;">
+            ${otp}
+          </div>
+          <p>This code expires in <strong>10 minutes</strong>. If you did not request it, you can ignore this email.</p>
+        </div>
+      `
+    };
+  },
 
   passwordChanged: (name) => ({
     subject: 'Password Changed Successfully - Hostel Management System',

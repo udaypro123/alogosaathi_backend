@@ -6,6 +6,7 @@ import os from 'os';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Readable } from 'stream';
 dotenv.config();
 
 // __dirname in ESM
@@ -39,6 +40,29 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only image files are allowed'), false);
 };
 
+const roadmapDocumentExtensions = new Set([
+  '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+  '.odt', '.ods', '.odp', '.txt', '.rtf', '.csv', '.md',
+  '.epub', '.zip'
+]);
+
+const roadmapDocumentStorage = multer.memoryStorage();
+
+const roadmapDocumentFileFilter = (req, file, cb) => {
+  const extension = path.extname(file.originalname).toLowerCase();
+  if (roadmapDocumentExtensions.has(extension)) return cb(null, true);
+  cb(new Error('Unsupported roadmap document format.'), false);
+};
+
+export const roadmapDocumentUpload = multer({
+  storage: roadmapDocumentStorage,
+  limits: {
+    fileSize: parseInt(process.env.ROADMAP_MAX_FILE_SIZE || '', 10) || 25 * 1024 * 1024,
+    files: 1
+  },
+  fileFilter: roadmapDocumentFileFilter
+});
+
 export const upload = multer({
   storage,
   limits: {
@@ -62,14 +86,47 @@ export const uploadFile = async (file) => file?.path;
 export const uploadToCloudinary = async (filePath, folder = 'uploads') => {
   if (!filePath) throw new Error('No file path provided');
 
+  configureCloudinary();
+
+  const res = await cloudinary.uploader.upload(filePath, { folder });
+  return res; // { secure_url, public_id, ... }
+};
+
+const configureCloudinary = () => {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
   });
+};
 
-  const res = await cloudinary.uploader.upload(filePath, { folder });
-  return res; // { secure_url, public_id, ... }
+export const uploadDocumentToCloudinary = (file, folder) => {
+  if (!file?.buffer) throw new Error('No document data provided');
+  configureCloudinary();
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'raw',
+        folder,
+        use_filename: true,
+        unique_filename: true,
+        filename_override: path.basename(file.originalname)
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error('Cloud storage returned no upload result'));
+        resolve(result);
+      }
+    );
+
+    Readable.from([file.buffer]).pipe(uploadStream);
+  });
+};
+
+export const deleteCloudinaryRawAsset = async (publicId) => {
+  configureCloudinary();
+  return cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
 };
 
 export const deleteFile = async (filePath) => {

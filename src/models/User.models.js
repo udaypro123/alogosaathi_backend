@@ -81,6 +81,12 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
   emailVerificationToken: String,
   emailVerificationExpires: Date,
+  emailVerificationCodeHash: String,
+  emailVerificationCodeExpires: Date,
+  emailVerificationAttempts: {
+    type: Number,
+    default: 0
+  },
   loginAttempts: {
     type: Number,
     default: 0

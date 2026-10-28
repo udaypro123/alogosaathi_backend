@@ -17,6 +17,7 @@ import templateRoutes from './routes/templates.route.js';
 import ourClientRoutes from './routes/ourClient.route.js';
 import newsRoutes from './routes/news.route.js';
 import coursesRoutes from './routes/courses.route.js';
+import roadmapsRoutes from './routes/roadmaps.route.js';
 import connectDB from './db/index.js';
 import { app } from './app.js';
 import { startAINewsCron } from './jobs/aiNews.cron.js';
@@ -89,6 +90,7 @@ app.use('/api/template', templateRoutes);
 app.use('/api/client', ourClientRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/course', coursesRoutes);
+app.use('/api/roadmaps', roadmapsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
