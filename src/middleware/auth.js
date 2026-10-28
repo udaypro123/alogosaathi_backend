@@ -44,13 +44,6 @@ const protect = async (req, res, next) => {
         });
       }
 
-      if (user.isEmailVerified !== true) {
-        return res.status(401).json({
-          success: false,
-          message: 'Verify your email address before accessing your account'
-        });
-      }
-
       req.user = user;
       next();
     } catch (error) {
@@ -108,7 +101,7 @@ const optionalAuth = async (req, res, next) => {
         // Get user from the token
         const user = await User.findById(decoded.id);
 
-        if (user && user.isActive && user.isEmailVerified === true) {
+        if (user && user.isActive) {
           req.user = user;
         }
       } catch (error) {

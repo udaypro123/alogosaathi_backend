@@ -240,10 +240,6 @@ class AuthService {
         throw new Error(message);
       }
 
-      if (!result.user.isEmailVerified) {
-        throw new ApiError(403, 'Verify your email address before signing in.');
-      }
-
       // Update last login
       result.user.lastLogin = new Date();
       await result.user.save();
@@ -308,10 +304,6 @@ class AuthService {
 
       if (!user) {
         throw new Error('Invalid refresh token');
-      }
-
-      if (user.isEmailVerified !== true) {
-        throw new ApiError(403, 'Verify your email address before signing in.');
       }
 
       // Generate new access token
