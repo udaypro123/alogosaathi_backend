@@ -129,6 +129,33 @@ export const deleteCloudinaryRawAsset = async (publicId) => {
   return cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
 };
 
+export const getCloudinaryRawDownloadUrls = (publicId, originalName) => {
+  configureCloudinary();
+  const extension = path.extname(originalName).slice(1);
+  const publicIdExtension = path.extname(publicId).slice(1);
+  const expiresAt = Math.floor(Date.now() / 1000) + 300;
+  const urls = [
+    cloudinary.utils.private_download_url(publicId, '', {
+      resource_type: 'raw',
+      type: 'upload',
+      attachment: true,
+      expires_at: expiresAt
+    })
+  ];
+
+  if (extension && publicIdExtension.toLowerCase() === extension.toLowerCase()) {
+    const publicIdWithoutExtension = publicId.slice(0, -(publicIdExtension.length + 1));
+    urls.push(cloudinary.utils.private_download_url(publicIdWithoutExtension, extension, {
+      resource_type: 'raw',
+      type: 'upload',
+      attachment: true,
+      expires_at: expiresAt
+    }));
+  }
+
+  return urls;
+};
+
 export const deleteFile = async (filePath) => {
   try {
     if (filePath) await fs.unlink(filePath);

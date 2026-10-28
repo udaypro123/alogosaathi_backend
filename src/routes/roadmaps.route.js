@@ -3,9 +3,13 @@ import { protect, authorize } from '../middleware/auth.js';
 import { roadmapDocumentUpload } from '../utils/fileUpload.js';
 import {
   getRoadmaps,
+  createRoadmapCourse,
+  updateRoadmapCourse,
+  deleteRoadmapCourse,
   uploadRoadmapDocument,
-  downloadRoadmapDocument,
-  deleteRoadmapDocument
+  updateRoadmapDocument,
+  deleteRoadmapDocument,
+  downloadRoadmapDocument
 } from '../controllers/roadmaps.controller.js';
 
 const router = express.Router();
@@ -24,8 +28,12 @@ const parseRoadmapDocument = (req, res, next) => {
 };
 
 router.get('/', protect, authorize('admin', 'users', 'student'), getRoadmaps);
+router.post('/courses', protect, authorize('admin'), createRoadmapCourse);
+router.put('/courses/:courseId', protect, authorize('admin'), updateRoadmapCourse);
+router.delete('/courses/:courseId', protect, authorize('admin'), deleteRoadmapCourse);
 router.get('/:documentId/download', protect, authorize('admin', 'users', 'student'), downloadRoadmapDocument);
 router.post('/documents', protect, authorize('admin'), parseRoadmapDocument, uploadRoadmapDocument);
+router.put('/:documentId', protect, authorize('admin'), parseRoadmapDocument, updateRoadmapDocument);
 router.delete('/:documentId', protect, authorize('admin'), deleteRoadmapDocument);
 
 export default router;

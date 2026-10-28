@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const roadmapDocumentSchema = new mongoose.Schema({
+  roadmapCourse: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RoadmapCourse',
+    index: true
+  },
   course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
